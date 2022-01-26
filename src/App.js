@@ -3,10 +3,13 @@ import './App.css';*/
 
 import React, { useState} from 'react';
 import { isEmpty } from 'loadsh';
-// hub tener datos para almacenar y modificar 
+import shortid from 'shortid';
+
 
 function App() {
+  // hub  seria el estado de los componentes tener datos para almacenar y modificar 
   const [task, setTask] = useState('')
+  const [tasks, setTasks] = useState([])
 
   const addTask =(e) => { 
     e.preventDefault()
@@ -14,8 +17,15 @@ function App() {
       console.log("Task empty")
       return
     }
-    console.log("Ok")
-    setTask('')
+    
+    const newTask = {
+      id: shortid.generate(),
+      name : task // se modificó para mejorar codigo
+      // =>  task    /*: task*/ //javascrit si despues de los dos puntos (el objeto que se asigna tiene el mismo nombre, solo se coloca el nombre sin asignar.)
+    }
+
+    setTasks([...tasks, newTask])  // spread operator
+    setTask("")
   }
 
   return (
@@ -43,11 +53,15 @@ function App() {
         <div className='col-8'>
           <h4 className='text-center'>Lista de Tareas</h4>
           <ul className='list-group'>
-            <li className='list-group-item'>
-              <span className='lead'>Nombre de la tarea</span>
-              <button className='btn btn-danger btn-sm float-right mx-2'> Eliminar </button>
-              <button className='btn btn-warning btn-sm float-right'> Editar </button>
-            </li>
+            {
+              tasks.map((task) => (
+                <li className='list-group-item' key={task.id}>
+                  <span className='lead'>{task.name}</span>
+                  <button className='btn btn-danger btn-sm float-right mx-2'> Eliminar </button>
+                  <button className='btn btn-warning btn-sm float-right'> Editar </button>
+                </li>
+              ))
+            }
           </ul>
         </div>
         <div className='col-4'>
