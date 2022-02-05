@@ -1,18 +1,32 @@
 /*import logo from './logo.svg';
 import './App.css';*/
 
-import React, { useState} from 'react';
+import React, { useState, useEffect} from 'react'; 
+  // hub useState => de estado  seria el estado de los componentes tener datos para almacenar y modificar 
+  // hub useEffect => servir cuando la pag cargue
 import { isEmpty, size} from 'loadsh';
 import shortid from 'shortid';
+import { addDocument, deleteDocument, getCollection, updateDocument } from './actions';
 
 
 function App() {
-  // hub  seria el estado de los componentes tener datos para almacenar y modificar 
+  
   const [task, setTask] = useState('')
   const [tasks, setTasks] = useState([])
   const [editMode, setEditMode] = useState(false)
   const [id, setId] = useState("")
   const [error, setError] = useState(null)
+
+  useEffect(()=> { //similiar a un ready
+    (async () => {
+      const result = await getCollection("tasks")
+      //console.log(result)
+      if (result.statusResponse){
+        setTasks(result.data)
+      }
+      // sino mostrar el error luego ojo
+    })()
+  }, [])
 
   const validForm =() => { 
     let isValid = true
@@ -25,29 +39,42 @@ function App() {
     return isValid
   }
 
-  const addTask =(e) => { 
+  const addTask = async (e) => {  //pasa a hacer async porque se espera que guarde en la base de datos
     e.preventDefault()
     
     if (!validForm()){
       return
     }
+
+    const result = await addDocument("tasks", { name: task }) 
+    if (!result.statusResponse){
+      setError(result.error)
+      return 
+    }//agrega en base de datos y si no muestra el error
 
     const newTask = {
       id: shortid.generate(),
       name : task // se modificó para mejorar codigo
       // =>  task    /*: task*/ //javascrit si despues de los dos puntos (el objeto que se asigna tiene el mismo nombre, solo se coloca el nombre sin asignar.)
-    }
+    }// ya esto no se usa porque se cambio al guardarlo en la base de dato
 
-    setTasks([...tasks, newTask])  // spread operator
+    //setTasks([...tasks, newTask])  // spread operator   //se cambia ahora para agregar el que se agrego a la base de datos
+    setTasks([...tasks, {id : result.data.id , name: task }])
     setTask("")
   }
 
-  const saveTask =(e) => { 
+  const saveTask = async(e) => { 
     e.preventDefault()
     if (!validForm()){
       return
     }
-    
+
+    const result = await updateDocument("tasks", id, { name: task }) 
+    if(!result.statusResponse) {
+      setError(result.error)
+      return
+    }
+  
     const editedTasks = tasks.map(item => item.id === id ? { id, name : task } : item)
     setTasks(editedTasks) 
     setEditMode(false)
@@ -55,7 +82,14 @@ function App() {
     setId("")
   }
 
-  const deleteTask = (id) => { 
+  const deleteTask = async(id) => { 
+
+    const result = await deleteDocument("tasks", id) 
+    if(!result.statusResponse) {
+      setError(result.error)
+      return
+    }
+
     const filteredTasks = tasks.filter(task => task.id !== id)
     setTasks(filteredTasks)
   }
